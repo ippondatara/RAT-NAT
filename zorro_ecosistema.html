@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zorro en el Ecosistema</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #e0d5b8;
+    overflow: hidden;
+  }
+  #gameWrapper {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  #canvas {
+    border: 3px solid #5a7a3a;
+    box-shadow: 0 0 30px rgba(90,122,58,0.4);
+    display: block;
+    image-rendering: pixelated;
+  }
+  #ui {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .panel {
+    background: rgba(20,30,15,0.9);
+    border: 2px solid #3a5a2a;
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .panel h3 {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #8aaa5a;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #3a5a2a;
+    padding-bottom: 4px;
+  }
+  .bar-row { margin-bottom: 5px; }
+  .bar-label {
+    font-size: 9px;
+    color: #c0b898;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+  .bar-bg {
+    height: 8px;
+    background: #1a2a0a;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #3a5a2a;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+  .bar-energy { background: linear-gradient(90deg, #e07020, #f0a030); }
+  .bar-plants { background: linear-gradient(90deg, #3a8a2a, #6ac040); }
+  .bar-prey   { background: linear-gradient(90deg, #8060b0, #b090e0); }
+  .bar-co2    { background: linear-gradient(90deg, #60a0c0, #80c0e0); }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #c0b898;
+    margin-bottom: 3px;
+  }
+  .stat-val { color: #f0d870; font-weight: bold; }
+  .adapt-tag {
+    background: rgba(60,100,40,0.6);
+    border: 1px solid #5a8a3a;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 9px;
+    color: #a0d060;
+    margin: 2px 0;
+  }
+  #notifications {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 460px;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .notif {
+    background: rgba(10,20,8,0.95);
+    border: 2px solid #5a8a3a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #d0e8b0;
+    animation: slideIn 0.3s ease, fadeOut 0.5s ease 3.5s forwards;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+
+  /* SCREENS */
+  #screen {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(10,15,8,0.97);
+    z-index: 200;
+    flex-direction: column;
+    gap: 14px;
+    padding: 30px;
+    text-align: center;
+  }
+  #screen.hidden { display: none; }
+  #screen h1 {
+    font-size: 22px;
+    color: #f0d060;
+    text-shadow: 0 0 20px rgba(240,208,96,0.4);
+    line-height: 1.3;
+    letter-spacing: 1px;
+  }
+  #screen .subtitle {
+    font-size: 11px;
+    color: #80a060;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .tax-box {
+    background: rgba(20,35,15,0.8);
+    border: 1px solid #3a5a2a;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 11px;
+    color: #b0c890;
+    line-height: 1.8;
+  }
+  .tax-box b { color: #f0d060; }
+  .desc-box {
+    max-width: 420px;
+    font-size: 12px;
+    color: #c8dba8;
+    line-height: 1.6;
+  }
+  .instr-box {
+    background: rgba(20,35,15,0.6);
+    border: 1px dashed #4a6a3a;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 11px;
+    color: #a0b888;
+    line-height: 1.9;
+  }
+  #screen button {
+    background: #4a7a2a;
+    color: #f0e8c0;
+    border: 2px solid #7aba4a;
+    border-radius: 6px;
+    padding: 12px 36px;
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    margin-top: 6px;
+  }
+  #screen button:hover {
+    background: #6aa040;
+    box-shadow: 0 0 20px rgba(106,160,64,0.5);
+    transform: translateY(-2px);
+  }
+  .adapt-screen {
+    max-width: 420px;
+    text-align: left;
+  }
+  .adapt-option {
+    background: rgba(20,35,15,0.8);
+    border: 2px solid #3a5a2a;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 6px 0;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .adapt-option:hover {
+    border-color: #8aca5a;
+    background: rgba(40,70,20,0.8);
+    transform: translateX(4px);
+  }
+  .adapt-option h4 { color: #f0d060; font-size: 13px; margin-bottom: 4px; }
+  .adapt-option p { font-size: 10px; color: #a0b888; line-height: 1.5; }
+  .result-emoji { font-size: 40px; }
+  .result-msg { font-size: 15px; color: #f0d060; }
+  .result-sub { font-size: 11px; color: #80a060; line-height: 1.6; max-width: 380px; }
+  .days-survived { font-size: 24px; color: #f0a030; }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA INICIAL / SELECCIÓN / GAME OVER -->
+<div id="screen">
+  <div id="screenContent"></div>
+</div>
+
+<div id="gameWrapper">
+  <canvas id="canvas" width="480" height="400"></canvas>
+  <div id="ui">
+    <div class="panel">
+      <h3>🦊 Estado</h3>
+      <div class="stat-row"><span>Día</span><span class="stat-val" id="statDay">1</span></div>
+      <div class="stat-row"><span>Clima</span><span class="stat-val" id="statClima">Normal</span></div>
+      <div class="stat-row"><span>Zona</span><span class="stat-val" id="statZona">Bosque</span></div>
+      <div class="bar-row">
+        <div class="bar-label"><span>⚡ Energía</span><span id="lblEnergy">100</span></div>
+        <div class="bar-bg"><div class="bar-fill bar-energy" id="barEnergy" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>🌿 Ecosistema</h3>
+      <div class="bar-row">
+        <div class="bar-label"><span>🌱 Plantas</span><span id="lblPlants">100</span></div>
+        <div class="bar-bg"><div class="bar-fill bar-plants" id="barPlants" style="width:100%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>🐇 Presas</span><span id="lblPrey">80</span></div>
+        <div class="bar-bg"><div class="bar-fill bar-prey" id="barPrey" style="width:80%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>💨 CO₂</span><span id="lblCO2">40</span></div>
+        <div class="bar-bg"><div class="bar-fill bar-co2" id="barCO2" style="width:40%"></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>🧬 Adaptaciones</h3>
+      <div id="adaptList"><div style="font-size:10px;color:#60806a;">Ninguna aún.</div></div>
+    </div>
+    <div class="panel" style="font-size:9px;color:#607050;line-height:1.6;">
+      <h3>🎮 Controles</h3>
+      WASD / Flechas<br>Muévete y come.<br>Sobrevive 6 días.
+    </div>
+  </div>
+</div>
+
+<div id="notifications"></div>
+
+<script>
+// ============================================================
+// CONSTANTES Y CONFIGURACIÓN
+// ============================================================
+const TILE = 32;
+const MAP_W = 40, MAP_H = 35;
+const VIEW_W = 480, VIEW_H = 400;
+const TILES_X = Math.floor(VIEW_W / TILE); // 15
+const TILES_Y = Math.floor(VIEW_H / TILE); // 12.5 → 13
+
+// Tipos de tile
+const T_GRASS = 0, T_TREE = 1, T_ROCK = 2, T_WATER = 3,
+      T_SHRUB = 4, T_DIRT = 5, T_FLOWER = 6;
+
+// Zonas
+const ZONE_FOREST = 'Bosque', ZONE_PRAIRIE = 'Pradera', ZONE_ROCKY = 'Rocosa';
+
+// Paleta pixel-art
+const PAL = {
+  grassL: '#7aba50', grassD: '#5a9a30', grassRock: '#8a9a70',
+  tree: '#2a6a18', treeTrunk: '#7a5030', treeCrown: '#3a8a28',
+  rock: '#787068', rockD: '#585048',
+  water: '#3880c8', waterD: '#2060a0',
+  shrub: '#4a8030', dirt: '#b08050',
+  flower: '#f0d040', flowerStem: '#5a9030',
+  foxBody: '#e87030', foxBelly: '#f4c080', foxEar: '#c04820',
+  foxTail: '#f0f0e0', foxEye: '#1a1a1a',
+  rabbitBody: '#c8c0b0', rabbitEar: '#a09080', rabbitEye: '#402820',
+  predatorBody: '#4060a0', predatorEye: '#f04040',
+  fruit: '#e04040', fruitStem: '#5a9030',
+  ui: '#1a2a10', uiBorder: '#4a7a30',
+};
+
+// ============================================================
+// ESTADO DEL JUEGO
+// ============================================================
+const G = {
+  // Ecosistema
+  energy: 100, day: 1, dayTick: 0, dayLen: 3600, // ~60s @60fps
+  plants: 100, prey: 80, co2: 40,
+  climate: 'Normal', climateTimer: 0, nextClimate: 1800,
+  // Jugador
+  px: 10, py: 10, // posición en tiles
+  dir: 2, // 0=up,1=right,2=down,3=left
+  moving: false, animFrame: 0, animTick: 0,
+  moveDelay: 0,
+  adaptations: [],
+  // Entidades
+  fruits: [], preyEntities: [], predator: null,
+  // Flags
+  phase: 'title', // title, playing, adapt, gameover
+  daysSurvived: 0, survivedTarget: 6,
+  overexploitNotified: false,
+  lowEnergyNotified: false,
+  keys: {},
+  lastNotifs: {},
+};
+
+// ============================================================
+// GENERACIÓN DEL MAPA
+// ============================================================
+let map = [];
+
+function generateMap() {
+  map = [];
+  for (let y = 0; y < MAP_H; y++) {
+    map[y] = [];
+    for (let x = 0; x < MAP_W; x++) {
+      // Zonas: izquierda=bosque, centro=pradera, derecha=rocosa
+      const zone = getZone(x, y);
+      let t = T_GRASS;
+      if (zone === ZONE_FOREST) {
+        const r = Math.random();
+        if (r < 0.22) t = T_TREE;
+        else if (r < 0.30) t = T_SHRUB;
+        else if (r < 0.33) t = T_FLOWER;
+      } else if (zone === ZONE_ROCKY) {
+        const r = Math.random();
+        if (r < 0.28) t = T_ROCK;
+        else if (r < 0.32) t = T_DIRT;
+      } else {
+        const r = Math.random();
+        if (r < 0.04) t = T_SHRUB;
+        else if (r < 0.07) t = T_FLOWER;
+      }
+      // Pequeño lago en el centro
+      const cx = MAP_W / 2, cy = MAP_H / 2;
+      if (Math.abs(x - cx) < 3 && Math.abs(y - cy) < 2) t = T_WATER;
+      map[y][x] = t;
+    }
+  }
+  // Bordes sólidos
+  for (let x = 0; x < MAP_W; x++) { map[0][x] = T_ROCK; map[MAP_H-1][x] = T_ROCK; }
+  for (let y = 0; y < MAP_H; y++) { map[y][0] = T_ROCK; map[y][MAP_W-1] = T_ROCK; }
+}
+
+function getZone(x, y) {
+  if (x < MAP_W * 0.38) return ZONE_FOREST;
+  if (x > MAP_W * 0.68) return ZONE_ROCKY;
+  return ZONE_PRAIRIE;
+}
+
+function isSolid(x, y) {
+  if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return true;
+  return map[y][x] === T_TREE || map[y][x] === T_ROCK || map[y][x] === T_WATER;
+}
+
+// ============================================================
+// SPAWN ENTIDADES
+// ============================================================
+function spawnFruits(n) {
+  for (let i = 0; i < n; i++) {
+    let x, y, tries = 0;
+    do {
+      x = 1 + Math.floor(Math.random() * (MAP_W * 0.45));
+      y = 1 + Math.floor(Math.random() * (MAP_H - 2));
+      tries++;
+    } while ((isSolid(x, y) || hasFruitAt(x, y)) && tries < 50);
+    if (tries < 50) G.fruits.push({ x, y, anim: Math.random() * Math.PI * 2 });
+  }
+}
+
+function hasFruitAt(x, y) {
+  return G.fruits.some(f => f.x === x && f.y === y);
+}
+
+function spawnPrey(n) {
+  for (let i = 0; i < n; i++) {
+    let x, y, tries = 0;
+    do {
+      x = Math.floor(MAP_W * 0.35) + Math.floor(Math.random() * (MAP_W * 0.30));
+      y = 1 + Math.floor(Math.random() * (MAP_H - 2));
+      tries++;
+    } while (isSolid(x, y) && tries < 50);
+    if (tries < 50) {
+      G.preyEntities.push({
+        x, y, fx: x * TILE + TILE/2, fy: y * TILE + TILE/2,
+        dir: Math.floor(Math.random() * 4),
+        moveTick: 0, moveDelay: 60 + Math.floor(Math.random() * 60),
+        anim: 0, alive: true
+      });
+    }
+  }
+}
+
+function spawnPredator() {
+  G.predator = {
+    x: Math.floor(MAP_W * 0.7), y: Math.floor(MAP_H * 0.3),
+    fx: 0, fy: 0, dir: 2,
+    state: 'patrol', patrolTick: 0,
+    moveTick: 0, moveDelay: 45,
+    anim: 0
+  };
+  G.predator.fx = G.predator.x * TILE + TILE/2;
+  G.predator.fy = G.predator.y * TILE + TILE/2;
+}
+
+// ============================================================
+// CANVAS & RENDER
+// ============================================================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function pixelRect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), w, h);
+}
+
+function drawTile(tx, ty, sx, sy) {
+  const t = map[ty][tx];
+  // Base
+  const zone = getZone(tx, ty);
+  let bg = zone === ZONE_ROCKY ? PAL.grassRock : (ty % 2 === tx % 2 ? PAL.grassL : PAL.grassD);
+  pixelRect(sx, sy, TILE, TILE, bg);
+
+  if (t === T_TREE) {
+    // Tronco
+    pixelRect(sx + 12, sy + 18, 8, 14, PAL.treeTrunk);
+    // Copa (3 círculos superpuestos como pixel art)
+    const cx = sx + 16, cy = sy + 14;
+    ctx.fillStyle = '#2a5a18';
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = PAL.treeCrown;
+    ctx.beginPath(); ctx.arc(cx - 4, cy - 4, 9, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#4aaa38';
+    ctx.beginPath(); ctx.arc(cx + 4, cy - 6, 7, 0, Math.PI*2); ctx.fill();
+  } else if (t === T_ROCK) {
+    pixelRect(sx + 4, sy + 8, 24, 18, PAL.rockD);
+    pixelRect(sx + 6, sy + 6, 22, 18, PAL.rock);
+    pixelRect(sx + 8, sy + 8, 8, 4, '#9a9088');
+  } else if (t === T_WATER) {
+    pixelRect(sx, sy, TILE, TILE, PAL.waterD);
+    pixelRect(sx + 4, sy + 8, 10, 4, PAL.water);
+    pixelRect(sx + 18, sy + 18, 10, 4, PAL.water);
+  } else if (t === T_SHRUB) {
+    pixelRect(sx + 6, sy + 14, 20, 14, '#3a6020');
+    pixelRect(sx + 4, sy + 10, 24, 16, PAL.shrub);
+    pixelRect(sx + 8, sy + 8, 16, 14, '#5aaa38');
+  } else if (t === T_DIRT) {
+    pixelRect(sx, sy, TILE, TILE, PAL.dirt);
+    pixelRect(sx + 4, sy + 6, 6, 4, '#907040');
+    pixelRect(sx + 18, sy + 18, 8, 4, '#907040');
+  } else if (t === T_FLOWER) {
+    pixelRect(sx + 14, sy + 16, 4, 14, PAL.flowerStem);
+    // Pétalos
+    const fc = [PAL.flower, '#f08040', '#e040e0', '#40c0f0'][Math.floor((tx + ty) % 4)];
+    for (let a = 0; a < 4; a++) {
+      const ax = Math.cos(a * Math.PI/2) * 6, ay = Math.sin(a * Math.PI/2) * 6;
+      pixelRect(sx + 16 + ax - 3, sy + 14 + ay - 3, 6, 6, fc);
+    }
+    pixelRect(sx + 13, sy + 12, 6, 6, '#f8e840');
+  }
+}
+
+function drawFruit(f, tick) {
+  const sx = f.x * TILE, sy = f.y * TILE;
+  const bob = Math.sin(f.anim + tick * 0.05) * 2;
+  // Tallo
+  pixelRect(sx + 14, sy + 10 + bob, 4, 10, PAL.fruitStem);
+  // Fruto
+  ctx.fillStyle = PAL.fruit;
+  ctx.beginPath();
+  ctx.arc(sx + 16, sy + 14 + bob, 6, 0, Math.PI*2);
+  ctx.fill();
+  pixelRect(sx + 14, sy + 8 + bob, 4, 4, '#f06060');
+}
+
+function drawPrey(p) {
+  const px = p.fx - TILE/2, py = p.fy - TILE/2;
+  const hop = Math.sin(p.anim * 0.3) * 2;
+  // Cuerpo (conejo simple)
+  pixelRect(px + 8, py + 14 + hop, 16, 12, PAL.rabbitBody);
+  // Cabeza
+  pixelRect(px + 10, py + 8 + hop, 12, 10, PAL.rabbitBody);
+  // Orejas
+  pixelRect(px + 11, py + 2 + hop, 4, 8, PAL.rabbitBody);
+  pixelRect(px + 17, py + 2 + hop, 4, 8, PAL.rabbitBody);
+  pixelRect(px + 12, py + 3 + hop, 2, 6, PAL.rabbitEar);
+  pixelRect(px + 18, py + 3 + hop, 2, 6, PAL.rabbitEar);
+  // Ojo
+  pixelRect(px + 14, py + 11 + hop, 2, 2, PAL.rabbitEye);
+  // Cola
+  pixelRect(px + 22, py + 15 + hop, 6, 6, '#f0f0f0');
+}
+
+function drawPredator(pred) {
+  const px = pred.fx - TILE/2, py = pred.fy - TILE/2;
+  // Cuerpo (lobo/águila simple)
+  pixelRect(px + 6, py + 14, 20, 14, PAL.predatorBody);
+  // Cabeza
+  pixelRect(px + 8, py + 8, 16, 12, PAL.predatorBody);
+  // Hocico
+  pixelRect(px + 10, py + 14, 12, 6, '#304880');
+  // Ojo
+  pixelRect(px + 12, py + 11, 3, 3, PAL.predatorEye);
+  // Orejas
+  pixelRect(px + 9, py + 4, 5, 6, PAL.predatorBody);
+  pixelRect(px + 18, py + 4, 5, 6, PAL.predatorBody);
+  // Patrón de alerta
+  if (pred.state === 'chase') {
+    ctx.fillStyle = '#f04040';
+    ctx.font = '10px Courier New';
+    ctx.fillText('!', pred.fx + 4, pred.fy - 14);
+  }
+}
+
+function drawFox() {
+  const sx = VIEW_W/2 - TILE/2;
+  const sy = VIEW_H/2 - TILE/2;
+  const bob = G.moving ? Math.sin(G.animFrame * 0.5) * 2 : 0;
+
+  // Cola
+  const tailX = G.dir === 1 ? -8 : G.dir === 3 ? 24 : 6;
+  const tailY = G.dir === 0 ? 20 : G.dir === 2 ? -4 : 10;
+  pixelRect(sx + tailX, sy + tailY + bob, 12, 10, PAL.foxTail);
+  pixelRect(sx + tailX + 2, sy + tailY + 2 + bob, 8, 6, PAL.foxBody);
+
+  // Cuerpo
+  pixelRect(sx + 8, sy + 14 + bob, 16, 14, PAL.foxBody);
+  pixelRect(sx + 10, sy + 16 + bob, 12, 10, PAL.foxBelly);
+
+  // Cabeza (orientada)
+  let hx = sx + 8, hy = sy + 6 + bob;
+  pixelRect(hx, hy, 16, 12, PAL.foxBody);
+
+  // Hocico / dirección
+  if (G.dir === 2) {
+    pixelRect(sx + 10, sy + 16 + bob, 12, 6, PAL.foxBelly);
+    pixelRect(sx + 8, sy + 6 + bob, 16, 12, PAL.foxBody);
+    pixelRect(sx + 10, sy + 14 + bob, 12, 6, PAL.foxBelly);
+    // Orejas
+    pixelRect(sx + 8, sy + 2 + bob, 6, 8, PAL.foxEar);
+    pixelRect(sx + 18, sy + 2 + bob, 6, 8, PAL.foxEar);
+    // Ojos
+    pixelRect(sx + 10, sy + 9 + bob, 3, 3, PAL.foxEye);
+    pixelRect(sx + 19, sy + 9 + bob, 3, 3, PAL.foxEye);
+  } else if (G.dir === 0) {
+    // Arriba: espalda
+    pixelRect(sx + 8, sy + 4 + bob, 16, 14, PAL.foxBody);
+    pixelRect(sx + 8, sy + 2 + bob, 6, 8, PAL.foxEar);
+    pixelRect(sx + 18, sy + 2 + bob, 6, 8, PAL.foxEar);
+  } else if (G.dir === 1) {
+    // Derecha
+    pixelRect(sx + 10, sy + 6 + bob, 16, 10, PAL.foxBody);
+    pixelRect(sx + 22, sy + 8 + bob, 6, 6, PAL.foxBelly);
+    pixelRect(sx + 14, sy + 2 + bob, 6, 8, PAL.foxEar);
+    pixelRect(sx + 24, sy + 9 + bob, 3, 3, PAL.foxEye);
+  } else {
+    // Izquierda
+    pixelRect(sx + 6, sy + 6 + bob, 16, 10, PAL.foxBody);
+    pixelRect(sx + 4, sy + 8 + bob, 6, 6, PAL.foxBelly);
+    pixelRect(sx + 12, sy + 2 + bob, 6, 8, PAL.foxEar);
+    pixelRect(sx + 6, sy + 9 + bob, 3, 3, PAL.foxEye);
+  }
+  // Patas
+  if (G.moving) {
+    const legBob1 = Math.sin(G.animFrame * 0.8) * 3;
+    const legBob2 = Math.cos(G.animFrame * 0.8) * 3;
+    pixelRect(sx + 9, sy + 26 + bob + legBob1, 4, 6, PAL.foxBody);
+    pixelRect(sx + 19, sy + 26 + bob + legBob2, 4, 6, PAL.foxBody);
+  } else {
+    pixelRect(sx + 9, sy + 26 + bob, 4, 6, PAL.foxBody);
+    pixelRect(sx + 19, sy + 26 + bob, 4, 6, PAL.foxBody);
+  }
+}
+
+function render(tick) {
+  if (G.phase !== 'playing') return;
+  ctx.clearRect(0, 0, VIEW_W, VIEW_H);
+
+  // Cámara centrada en jugador
+  const camX = G.px - Math.floor(TILES_X / 2);
+  const camY = G.py - Math.floor(TILES_Y / 2);
+  const offX = -camX * TILE;
+  const offY = -camY * TILE;
+
+  ctx.save();
+  ctx.translate(offX, offY);
+
+  // Tiles
+  const x0 = Math.max(0, camX - 1), x1 = Math.min(MAP_W - 1, camX + TILES_X + 1);
+  const y0 = Math.max(0, camY - 1), y1 = Math.min(MAP_H - 1, camY + TILES_Y + 1);
+  for (let ty = y0; ty <= y1; ty++) {
+    for (let tx = x0; tx <= x1; tx++) {
+      drawTile(tx, ty, tx * TILE, ty * TILE);
+    }
+  }
+
+  // Frutos
+  G.fruits.forEach(f => {
+    if (f.x >= x0 && f.x <= x1 && f.y >= y0 && f.y <= y1) drawFruit(f, tick);
+  });
+
+  // Presas
+  G.preyEntities.forEach(p => {
+    if (p.alive) {
+      if (p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1) drawPrey(p);
+    }
+  });
+
+  // Depredador
+  if (G.predator) drawPredator(G.predator);
+
+  // Zorro (centrado)
+  ctx.restore();
+  drawFox();
+
+  // Overlay de clima
+  drawClimateOverlay();
+}
+
+function drawClimateOverlay() {
+  if (G.climate === 'Ola de calor') {
+    ctx.fillStyle = 'rgba(255,80,0,0.07)';
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    // Partículas de calor
+    ctx.fillStyle = 'rgba(255,160,0,0.15)';
+    for (let i = 0; i < 8; i++) {
+      const hx = (G.dayTick * 3 + i * 60) % VIEW_W;
+      const hy = (i * 53 + G.dayTick) % VIEW_H;
+      ctx.fillRect(hx, hy, 2, 8);
+    }
+  } else if (G.climate === 'Invierno') {
+    ctx.fillStyle = 'rgba(180,220,255,0.06)';
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    // Copos
+    ctx.fillStyle = 'rgba(220,240,255,0.5)';
+    for (let i = 0; i < 12; i++) {
+      const fx = (G.dayTick * 1.5 + i * 40) % VIEW_W;
+      const fy = (G.dayTick * 0.8 + i * 37) % VIEW_H;
+      ctx.fillRect(fx, fy, 2, 2);
+    }
+  } else if (G.climate === 'Sequía') {
+    ctx.fillStyle = 'rgba(160,120,40,0.07)';
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
+}
+
+// ============================================================
+// LÓGICA DEL JUEGO
+// ============================================================
+let tick = 0;
+
+function startGame() {
+  generateMap();
+  G.energy = 100; G.day = 1; G.dayTick = 0;
+  G.plants = 100; G.prey = 80; G.co2 = 40;
+  G.climate = 'Normal'; G.climateTimer = 0; G.nextClimate = 1500 + Math.random() * 1000;
+  G.px = 8; G.py = 14; G.dir = 2;
+  G.moving = false; G.animFrame = 0; G.moveDelay = 0;
+  G.adaptations = [];
+  G.fruits = []; G.preyEntities = [];
+  G.daysSurvived = 0;
+  G.overexploitNotified = false;
+  G.lowEnergyNotified = false;
+  G.lastNotifs = {};
+  spawnFruits(16);
+  spawnPrey(12);
+  spawnPredator();
+  G.phase = 'playing';
+  document.getElementById('screen').classList.add('hidden');
+  updateUI();
+  gameLoop();
+}
+
+function gameLoop() {
+  if (G.phase !== 'playing') return;
+  tick++;
+  handleInput();
+  updateEntities();
+  updateEcosystem();
+  checkInteractions();
+  checkDay();
+  checkGameOver();
+  updateUI();
+  render(tick);
+  requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// INPUT
+// ============================================================
+document.addEventListener('keydown', e => {
+  G.keys[e.code] = true;
+  // Prevenir scroll
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { G.keys[e.code] = false; });
+
+function handleInput() {
+  if (G.moveDelay > 0) { G.moveDelay--; return; }
+  let dx = 0, dy = 0;
+  if (G.keys['ArrowUp'] || G.keys['KeyW']) { dy = -1; G.dir = 0; }
+  else if (G.keys['ArrowRight'] || G.keys['KeyD']) { dx = 1; G.dir = 1; }
+  else if (G.keys['ArrowDown'] || G.keys['KeyS']) { dy = 1; G.dir = 2; }
+  else if (G.keys['ArrowLeft'] || G.keys['KeyA']) { dx = -1; G.dir = 3; }
+
+  if (dx !== 0 || dy !== 0) {
+    const nx = G.px + dx, ny = G.py + dy;
+    if (!isSolid(nx, ny)) {
+      G.px = nx; G.py = ny;
+      G.moving = true;
+      G.animFrame++;
+      // Coste de movimiento
+      let cost = 0.5;
+      if (G.climate === 'Invierno' && !G.adaptations.includes('Resistencia al frío')) cost += 0.4;
+      if (G.climate === 'Ola de calor' && G.adaptations.includes('Resistencia al frío')) cost += 0.4;
+      if (G.climate === 'Ola de calor') cost += 0.3;
+      G.energy = Math.max(0, G.energy - cost);
+      G.moveDelay = 10;
+    }
+  } else {
+    G.moving = false;
+  }
+}
+
+// ============================================================
+// ENTIDADES
+// ============================================================
+function updateEntities() {
+  // Animar y mover presas
+  G.preyEntities.forEach(p => {
+    if (!p.alive) return;
+    p.anim++;
+    p.moveTick++;
+    if (p.moveTick >= p.moveDelay) {
+      p.moveTick = 0;
+      p.moveDelay = 50 + Math.floor(Math.random() * 70);
+      // Movimiento aleatorio
+      const dirs = [[0,-1],[1,0],[0,1],[-1,0]];
+      const d = dirs[Math.floor(Math.random() * 4)];
+      const nx = p.x + d[0], ny = p.y + d[1];
+      if (!isSolid(nx, ny) && getZone(nx, ny) !== ZONE_ROCKY) {
+        p.x = nx; p.y = ny;
+      }
+      p.dir = Math.floor(Math.random() * 4);
+    }
+    p.fx += (p.x * TILE + TILE/2 - p.fx) * 0.15;
+    p.fy += (p.y * TILE + TILE/2 - p.fy) * 0.15;
+  });
+
+  // Depredador
+  if (G.predator) updatePredator();
+}
+
+function updatePredator() {
+  const pred = G.predator;
+  pred.anim++;
+  pred.moveTick++;
+
+  const dist = Math.abs(pred.x - G.px) + Math.abs(pred.y - G.py);
+
+  if (dist < 7) pred.state = 'chase';
+  else if (dist > 12) pred.state = 'patrol';
+
+  if (pred.moveTick >= pred.moveDelay) {
+    pred.moveTick = 0;
+    let dx = 0, dy = 0;
+    if (pred.state === 'chase') {
+      dx = Math.sign(G.px - pred.x);
+      dy = Math.sign(G.py - pred.y);
+      // Preferir un eje
+      if (Math.abs(G.px - pred.x) > Math.abs(G.py - pred.y)) dy = 0; else dx = 0;
+      pred.moveDelay = 30;
+    } else {
+      // Patrulla aleatoria en zona rocosa/pradera
+      const dirs = [[0,-1],[1,0],[0,1],[-1,0]];
+      const d = dirs[Math.floor(Math.random() * 4)];
+      dx = d[0]; dy = d[1];
+      pred.moveDelay = 50;
+    }
+    const nx = pred.x + dx, ny = pred.y + dy;
+    if (!isSolid(nx, ny)) { pred.x = nx; pred.y = ny; }
+  }
+  pred.fx += (pred.x * TILE + TILE/2 - pred.fx) * 0.12;
+  pred.fy += (pred.y * TILE + TILE/2 - pred.fy) * 0.12;
+
+  // Daño si muy cerca
+  if (Math.abs(pred.x - G.px) <= 1 && Math.abs(pred.y - G.py) <= 1) {
+    G.energy = Math.max(0, G.energy - 0.4);
+  }
+}
+
+// ============================================================
+// ECOSISTEMA
+// ============================================================
+function updateEcosystem() {
+  G.dayTick++;
+  G.climateTimer++;
+
+  // Coste base de energía por tiempo
+  let timeCost = 0.03;
+  if (G.climate === 'Invierno') timeCost += 0.025;
+  if (G.climate === 'Ola de calor') timeCost += 0.02;
+  if (G.climate === 'Sequía') timeCost += 0.01;
+  // Adaptaciones
+  if (G.climate === 'Invierno' && G.adaptations.includes('Resistencia al frío')) timeCost -= 0.015;
+  G.energy = Math.max(0, G.energy - timeCost);
+
+  // Ciclo del carbono
+  const plantGrowth = (G.co2 / 200) * 0.08;
+  const plantDrain = (G.prey / 150) * 0.06;
+  const climatePlant = G.climate === 'Sequía' ? -0.05 : G.climate === 'Ola de calor' ? -0.03 : G.climate === 'Invierno' ? -0.02 : 0;
+  G.plants = Math.max(0, Math.min(100, G.plants + plantGrowth - plantDrain + climatePlant));
+
+  const preyGrowth = (G.plants / 200) * 0.05;
+  const preyDrain = 0.02;
+  G.prey = Math.max(0, Math.min(100, G.prey + preyGrowth - preyDrain));
+
+  G.co2 = Math.max(0, Math.min(100, G.co2 + 0.01));
+
+  // Cambio de clima
+  if (G.climateTimer >= G.nextClimate) {
+    triggerClimate();
+  }
+
+  // Spawn dinámico
+  if (tick % 400 === 0 && G.plants > 30) spawnFruits(2);
+  if (tick % 600 === 0 && G.prey > 20 && G.preyEntities.filter(p => p.alive).length < 15) spawnPrey(2);
+
+  // Notificación de recuperación
+  if (G.co2 > 60 && G.plants > 50 && !notifCooledDown('recovery')) {
+    showNotif('🔄 Recuperación', 'El aumento de CO₂ favorece el crecimiento de plantas.\nEsto permite que las presas se recuperen.');
+    setNotifCooldown('recovery', 1200);
+  }
+
+  // Sobreexplotación
+  if (G.prey < 20 && !G.overexploitNotified) {
+    showNotif('⚠️ Sobreexplotación', 'Has reducido demasiado la población de presas.\nEl ecosistema pierde equilibrio y será más difícil sobrevivir.');
+    G.overexploitNotified = true;
+  }
+  if (G.prey > 35) G.overexploitNotified = false;
+
+  // Energía baja
+  if (G.energy < 20 && !G.lowEnergyNotified) {
+    showNotif('⚠️ Energía baja', 'Tu energía es muy baja.\nSin energía, no puedes sobrevivir.');
+    G.lowEnergyNotified = true;
+  }
+  if (G.energy > 35) G.lowEnergyNotified = false;
+}
+
+function notifCooledDown(key) {
+  return G.lastNotifs[key] && tick - G.lastNotifs[key] < (G.lastNotifs[key + '_cd'] || 0);
+}
+function setNotifCooldown(key, cd) {
+  G.lastNotifs[key] = tick; G.lastNotifs[key + '_cd'] = cd;
+}
+
+function triggerClimate() {
+  const options = ['Invierno', 'Ola de calor', 'Sequía', 'Normal', 'Normal'];
+  const prev = G.climate;
+  G.climate = options[Math.floor(Math.random() * options.length)];
+  G.climateTimer = 0;
+  G.nextClimate = 900 + Math.random() * 1200;
+
+  if (G.climate !== 'Normal' && G.climate !== prev) {
+    if (G.climate === 'Ola de calor') {
+      showNotif('🌡️ Ola de calor', 'El calor aumenta tu gasto de energía.\nLas plantas disminuyen, por lo que habrá menos presas.');
+    } else if (G.climate === 'Invierno') {
+      showNotif('❄️ Invierno', 'El frío reduce la actividad de las presas.\nNecesitarás más energía para sobrevivir.');
+    } else if (G.climate === 'Sequía') {
+      showNotif('🌵 Sequía', 'La falta de agua reduce el crecimiento de plantas.\nMenos plantas significa menos alimento en la cadena.');
+    }
+  } else if (G.climate === 'Normal' && prev !== 'Normal') {
+    G.climate = 'Normal';
+  }
+}
+
+// ============================================================
+// INTERACCIONES
+// ============================================================
+function checkInteractions() {
+  // Comer frutos
+  const fi = G.fruits.findIndex(f => f.x === G.px && f.y === G.py);
+  if (fi !== -1) {
+    G.fruits.splice(fi, 1);
+    let gain = 12;
+    if (G.adaptations.includes('Dieta flexible')) gain = 18;
+    G.energy = Math.min(100, G.energy + gain);
+    G.co2 = Math.min(100, G.co2 + 2);
+    if (!notifCooledDown('fruit')) {
+      showNotif('🌱 Recolección', 'Estás consumiendo productores (plantas).\nSon la base de la energía en el ecosistema.');
+      setNotifCooldown('fruit', 600);
+    }
+  }
+
+  // Cazar presas
+  const pi = G.preyEntities.findIndex(p => p.alive && p.x === G.px && p.y === G.py);
+  if (pi !== -1) {
+    G.preyEntities[pi].alive = false;
+    let gain = 30;
+    if (G.adaptations.includes('Sigilo')) gain = 38;
+    if (G.adaptations.includes('Dieta flexible')) gain = 22;
+    G.energy = Math.min(100, G.energy + gain);
+    G.co2 = Math.min(100, G.co2 + 5);
+    G.prey = Math.max(0, G.prey - 8);
+    if (!notifCooledDown('hunt')) {
+      showNotif('🦊 Caza exitosa', 'Has obtenido energía al consumir otro organismo.\nLa energía fluye entre niveles de la cadena alimenticia.');
+      setNotifCooldown('hunt', 500);
+    }
+  }
+}
+
+// ============================================================
+// DÍA Y PROGRESIÓN
+// ============================================================
+function checkDay() {
+  if (G.dayTick >= G.dayLen) {
+    G.dayTick = 0;
+    G.day++;
+    G.daysSurvived++;
+    // Dificultad
+    G.dayLen = Math.max(1800, G.dayLen - 100);
+
+    if (G.day > G.survivedTarget) {
+      G.phase = 'gameover';
+      showGameOver(true);
+      return;
+    }
+    // Adaptación cada 2 días
+    if (G.day % 2 === 0) {
+      G.phase = 'adapt';
+      showAdaptScreen();
+    }
+  }
+}
+
+function checkGameOver() {
+  if (G.energy <= 0) {
+    G.phase = 'gameover';
+    showGameOver(false);
+  }
+}
+
+// ============================================================
+// UI UPDATES
+// ============================================================
+function updateUI() {
+  document.getElementById('statDay').textContent = G.day + '/' + G.survivedTarget;
+  document.getElementById('statClima').textContent = G.climate;
+  document.getElementById('statZona').textContent = getZone(G.px, G.py);
+  setBar('barEnergy', 'lblEnergy', G.energy, 100);
+  setBar('barPlants', 'lblPlants', G.plants, 100);
+  setBar('barPrey', 'lblPrey', G.prey, 100);
+  setBar('barCO2', 'lblCO2', G.co2, 100);
+
+  const al = document.getElementById('adaptList');
+  if (G.adaptations.length === 0) {
+    al.innerHTML = '<div style="font-size:10px;color:#60806a;">Ninguna aún.</div>';
+  } else {
+    al.innerHTML = G.adaptations.map(a => `<div class="adapt-tag">${a}</div>`).join('');
+  }
+}
+
+function setBar(barId, lblId, val, max) {
+  const pct = Math.max(0, Math.min(100, (val / max) * 100));
+  document.getElementById(barId).style.width = pct + '%';
+  document.getElementById(lblId).textContent = Math.floor(val);
+}
+
+// ============================================================
+// NOTIFICACIONES
+// ============================================================
+function showNotif(title, msg) {
+  const container = document.getElementById('notifications');
+  const el = document.createElement('div');
+  el.className = 'notif';
+  el.innerHTML = `<b>${title}</b><br>${msg.replace(/\n/g, '<br>')}`;
+  container.appendChild(el);
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 4000);
+}
+
+// ============================================================
+// PANTALLAS
+// ============================================================
+function showTitle() {
+  G.phase = 'title';
+  document.getElementById('screen').classList.remove('hidden');
+  document.getElementById('screenContent').innerHTML = `
+    <div class="subtitle">Juego educativo de ecosistemas</div>
+    <h1>🦊 Zorro en el Ecosistema<br><span style="font-size:16px;color:#a0c870;">Supervivencia y Adaptación</span></h1>
+    <div class="tax-box">
+      <b>Reino:</b> Animalia &nbsp;|&nbsp; <b>Filo:</b> Chordata<br>
+      <b>Clase:</b> Mammalia &nbsp;|&nbsp; <b>Orden:</b> Carnivora<br>
+      <b>Familia:</b> Canidae
+    </div>
+    <div class="desc-box">
+      El zorro es un consumidor secundario que obtiene energía al alimentarse de otros animales o plantas.
+      Su supervivencia depende del equilibrio del ecosistema y de su capacidad de adaptación.
+    </div>
+    <div class="instr-box">
+      🎮 Muévete con <b>WASD</b> o <b>Flechas</b><br>
+      🍎 Recoge frutos rojos para energía<br>
+      🐇 Caza conejos para más energía<br>
+      🔵 Evita al depredador azul<br>
+      🧬 Adáptate cada 2 días<br>
+      🎯 Sobrevive 6 días
+    </div>
+    <button onclick="startGame()">▶ COMENZAR</button>
+  `;
+}
+
+function showAdaptScreen() {
+  document.getElementById('screen').classList.remove('hidden');
+  const options = [
+    {
+      name: '🐾 Sigilo',
+      desc: 'Mejor eficiencia en la caza (+25% energía de presas).\nMenor velocidad de movimiento.',
+      key: 'Sigilo'
+    },
+    {
+      name: '🌿 Dieta flexible',
+      desc: 'Obtienes más energía de las plantas (+50%).\nMenor eficiencia como cazador (−25%).',
+      key: 'Dieta flexible'
+    },
+    {
+      name: '❄️ Resistencia al frío',
+      desc: 'Gastas menos energía en invierno.\nEl calor te afecta más en olas de calor.',
+      key: 'Resistencia al frío'
+    },
+  ];
+  // Seleccionar 2 aleatoriamente
+  const shuffled = options.sort(() => Math.random() - 0.5).slice(0, 2);
+  document.getElementById('screenContent').innerHTML = `
+    <div class="subtitle">Día ${G.day} completo</div>
+    <h1 style="font-size:18px;">🧬 Selección Natural</h1>
+    <div class="desc-box" style="font-size:11px;">Has sobrevivido otro día. Elige una adaptación que te ayude a continuar.</div>
+    <div class="adapt-screen">
+      ${shuffled.map(o => `
+        <div class="adapt-option" onclick="chooseAdaptation('${o.key}')">
+          <h4>${o.name}</h4>
+          <p>${o.desc.replace(/\n/g, '<br>')}</p>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function chooseAdaptation(key) {
+  if (!G.adaptations.includes(key)) G.adaptations.push(key);
+  const msgs = {
+    'Sigilo': ['🧬 Adaptación sigilo', 'Has desarrollado mayor sigilo.\nMejor caza, pero menor velocidad.'],
+    'Dieta flexible': ['🧬 Dieta flexible', 'Puedes obtener más energía de plantas.\nPero reduces tu eficiencia como cazador.'],
+    'Resistencia al frío': ['🧬 Resistencia al frío', 'Gastas menos energía en bajas temperaturas.\nPero el calor te afecta más.'],
+  };
+  document.getElementById('screen').classList.add('hidden');
+  G.phase = 'playing';
+  const m = msgs[key];
+  if (m) showNotif(m[0], m[1]);
+  gameLoop();
+}
+
+function showGameOver(won) {
+  document.getElementById('screen').classList.remove('hidden');
+  if (won) {
+    document.getElementById('screenContent').innerHTML = `
+      <div class="result-emoji">🦊🌿</div>
+      <div class="result-msg">¡Has sobrevivido!</div>
+      <div class="days-survived">6 días completados</div>
+      <div class="result-sub">
+        Lograste mantener el equilibrio del ecosistema.<br><br>
+        <b>Flujo de energía:</b> La energía pasa de plantas → presas → zorro, perdiéndose en cada nivel.<br>
+        <b>Ciclo del carbono:</b> Al comer, liberas CO₂ que alimenta más plantas.<br>
+        <b>Selección natural:</b> Tus adaptaciones aumentaron tu probabilidad de sobrevivir.
+      </div>
+      <button onclick="showTitle()">🔄 Jugar de nuevo</button>
+    `;
+  } else {
+    document.getElementById('screenContent').innerHTML = `
+      <div class="result-emoji">💀</div>
+      <div class="result-msg">Has perdido</div>
+      <div class="days-survived">Día ${G.day} — ${G.daysSurvived} días sobrevividos</div>
+      <div class="result-sub">
+        Tu energía llegó a cero. En la naturaleza, sin energía no hay supervivencia.<br><br>
+        <b>Flujo de energía:</b> Cada movimiento y función vital consume energía.<br>
+        <b>Selección natural:</b> Las adaptaciones son clave para sobrevivir al entorno.
+      </div>
+      <button onclick="showTitle()">🔄 Intentar de nuevo</button>
+    `;
+  }
+}
+
+// ============================================================
+// INICIO
+// ============================================================
+showTitle();
+</script>
+</body>
+</html>
