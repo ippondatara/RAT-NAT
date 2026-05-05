@@ -1,0 +1,213 @@
+/* ===========================
+   RATA SURVIVOR – ESTILOS
+   =========================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0a0c10;
+  --panel:    #12151c;
+  --border:   #2a3040;
+  --accent:   #5dfc8c;
+  --accent2:  #fc5d5d;
+  --accent3:  #5db4fc;
+  --text:     #d4e0c8;
+  --text-dim: #6a7a60;
+  --pixel:    'Press Start 2P', monospace;
+  --mono:     'VT323', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--pixel);
+  font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ── SCREENS ─────────────────────────── */
+.screen { display: none; width: 100%; height: 100vh; position: absolute; top:0; left:0; }
+.screen.active { display: flex; align-items: center; justify-content: center; }
+
+/* ── START SCREEN ────────────────────── */
+.start-box {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  padding: 28px 32px;
+  max-width: 480px;
+  width: 95%;
+  text-align: center;
+  image-rendering: pixelated;
+  box-shadow: 0 0 40px #5dfc8c22;
+}
+
+.rat-icon { font-size: 48px; margin-bottom: 8px; }
+
+h1 {
+  font-family: var(--pixel);
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  line-height: 1.4;
+}
+h1 span { display: block; font-size: 13px; color: var(--text-dim); letter-spacing: 6px; }
+
+.tagline { color: var(--text-dim); font-size: 8px; margin: 10px 0 20px; letter-spacing: 1px; }
+
+.instructions {
+  text-align: left;
+  background: #0d1018;
+  border: 1px solid var(--border);
+  padding: 14px;
+  margin-bottom: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.instr-row { display: flex; align-items: center; gap: 10px; font-size: 8px; color: var(--text); }
+.key {
+  background: var(--border);
+  color: var(--accent);
+  padding: 3px 6px;
+  border-radius: 2px;
+  white-space: nowrap;
+  font-size: 7px;
+}
+.food-dot { width: 10px; height: 10px; background: #5dfc8c; border-radius: 50%; flex-shrink: 0; }
+.wall-dot { width: 10px; height: 10px; background: #888; flex-shrink: 0; }
+
+.zone-legend {
+  text-align: left; font-size: 8px; color: var(--text-dim);
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 20px;
+}
+.zone-legend div { display: flex; align-items: center; gap: 8px; }
+.z { display: inline-block; width: 12px; height: 12px; flex-shrink: 0; }
+.z1 { background: #1a3a1a; border: 1px solid #2a5a2a; }
+.z2 { background: #3a3010; border: 1px solid #5a4a18; }
+.z3 { background: #3a1010; border: 1px solid #6a1818; }
+
+button {
+  font-family: var(--pixel);
+  font-size: 11px;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 12px 24px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background .15s, transform .1s;
+}
+button:hover { background: #88ffaa; transform: scale(1.03); }
+button:active { transform: scale(0.97); }
+
+/* ── GAME SCREEN ─────────────────────── */
+#screen-game {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: #060809;
+}
+
+/* HUD */
+#hud {
+  width: 100%;
+  max-width: 1280px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 2px solid var(--border);
+  flex-wrap: wrap;
+  z-index: 10;
+}
+.hud-block { display: flex; align-items: center; gap: 8px; }
+.hud-label { color: var(--text-dim); font-size: 7px; letter-spacing: 1px; }
+#hud-zone, #hud-climate, #hud-time, #hud-trait {
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--accent);
+}
+
+/* Energy bar */
+.bar-outer { width: 120px; height: 10px; background: #1a1e28; border: 1px solid var(--border); }
+.bar-inner { height: 100%; transition: width .3s, background .3s; }
+.energy { background: var(--accent); }
+
+/* Canvas */
+#gameCanvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: none;
+}
+
+/* ── EVO PANEL ───────────────────────── */
+#evo-panel {
+  position: fixed; inset: 0;
+  background: #000000cc;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+#evo-panel h2 { font-size: 14px; color: var(--accent); margin-bottom: 10px; }
+#evo-panel p  { font-size: 8px; color: var(--text-dim); margin-bottom: 24px; text-align: center; }
+#evo-choices  { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+
+.evo-btn {
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  color: var(--text);
+  padding: 16px 20px;
+  max-width: 200px;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--pixel);
+  font-size: 8px;
+  line-height: 1.7;
+  transition: background .15s;
+}
+.evo-btn:hover { background: #1a2e1a; }
+.evo-btn strong { display: block; color: var(--accent); font-size: 9px; margin-bottom: 6px; }
+
+.hidden { display: none !important; }
+
+/* ── CLIMATE MESSAGE ─────────────────── */
+.climate-msg {
+  position: fixed;
+  top: 70px; left: 50%; transform: translateX(-50%);
+  background: #2a1010ee;
+  border: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-family: var(--pixel);
+  font-size: 9px;
+  padding: 8px 16px;
+  z-index: 50;
+  animation: fadeDown .4s ease;
+}
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── END SCREEN ──────────────────────── */
+#screen-end { align-items: center; justify-content: center; }
+.end-box {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  padding: 36px 40px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 0 40px #fc5d5d22;
+}
+.rat-dead { font-size: 48px; margin-bottom: 8px; }
+.end-box h2 { font-size: 18px; color: var(--accent2); margin-bottom: 8px; }
+.end-box p  { font-size: 8px; color: var(--text-dim); margin-bottom: 20px; }
+#end-stats {
+  font-family: var(--mono); font-size: 18px; color: var(--text);
+  line-height: 1.8; margin-bottom: 24px; text-align: left;
+}

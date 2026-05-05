@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RataSurvivor – Biología en Acción</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ===== PANTALLA DE INICIO ===== -->
+  <div id="screen-start" class="screen active">
+    <div class="start-box">
+      <div class="rat-icon">🐀</div>
+      <h1>RATA<span>SURVIVOR</span></h1>
+      <p class="tagline">Biología · Selección Natural · Supervivencia</p>
+      <div class="instructions">
+        <div class="instr-row"><span class="key">W A S D</span><span>o flechas para moverse</span></div>
+        <div class="instr-row"><span class="key">ESPACIO</span><span>correr (gasta más energía)</span></div>
+        <div class="instr-row"><span class="food-dot"></span><span>come los alimentos verdes</span></div>
+        <div class="instr-row"><span class="wall-dot"></span><span>evita las rocas y el borde</span></div>
+      </div>
+      <div class="zone-legend">
+        <div><span class="z z1"></span> Zona Segura – muchos recursos</div>
+        <div><span class="z z2"></span> Zona de Escasez – pocos recursos</div>
+        <div><span class="z z3"></span> Zona Hostil – clima extremo</div>
+      </div>
+      <button id="btn-start">▶ COMENZAR</button>
+    </div>
+  </div>
+
+  <!-- ===== PANTALLA DE JUEGO ===== -->
+  <div id="screen-game" class="screen">
+    <!-- HUD superior -->
+    <div id="hud">
+      <div class="hud-block">
+        <span class="hud-label">ENERGÍA</span>
+        <div class="bar-outer"><div id="energy-bar" class="bar-inner energy"></div></div>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">ZONA</span>
+        <span id="hud-zone">Segura</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">CLIMA</span>
+        <span id="hud-climate">Normal 🌤</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">TIEMPO</span>
+        <span id="hud-time">0s</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">ESTADO</span>
+        <span id="hud-trait">Normal</span>
+      </div>
+    </div>
+
+    <!-- Canvas del juego -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Panel de evolución (oculto por defecto) -->
+    <div id="evo-panel" class="hidden">
+      <h2>🧬 ¡ADAPTACIÓN DISPONIBLE!</h2>
+      <p id="evo-desc">El entorno ha moldeado tu biología. Elige una adaptación:</p>
+      <div id="evo-choices"></div>
+    </div>
+
+    <!-- Mensaje de clima -->
+    <div id="climate-msg" class="climate-msg hidden"></div>
+  </div>
+
+  <!-- ===== PANTALLA DE FIN ===== -->
+  <div id="screen-end" class="screen">
+    <div class="end-box">
+      <div class="rat-dead">💀</div>
+      <h2>EXTINCIÓN</h2>
+      <p>Tu linaje no sobrevivió al entorno.</p>
+      <div id="end-stats"></div>
+      <button id="btn-restart">↺ INTENTAR DE NUEVO</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
